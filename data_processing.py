@@ -301,7 +301,7 @@ class DataProcessing(object):
 
         self.save_df(self.df_paired, 'paired', verbose_string='Group normed data saved to file {} (overwritten)!\n')
 
-    def remove_outlier_participants(self):
+    def exclude_outlier_participants(self):
         # Compute the overall brightness of the stimulus as an indicator of adequate performance
         stim_colors = self.data_prep['stim_colors_rgb'].copy()
         stim_colors = np.where(self.masks['core_testing'][..., np.newaxis], stim_colors, np.nan)

@@ -75,7 +75,7 @@ class RegressionModel(object):
             Post-error : 75\% context & {row_strings['neg_acc_ind:target_acc_75']} \\\\
             Post-correct : 35\% context & {row_strings['acc_ind:target_acc_35']} \\\\""" + r"""
             \bottomrule
-            \multicolumn{4}{l}{\footnotesize {.} $p<0.1$,\:\:{*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
+            \multicolumn{4}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
             \end{tabular}
             """).strip()
             with open(os.path.join(dir, 'basic_model.tex'), 'w') as f:
@@ -106,7 +106,7 @@ class RegressionModel(object):
             Difficulty [\%] \^{{}} 3 & {row_strings['stim_acc_ded_cu_scaled']} \\\\
             Post-error : Difficulty [\%] & {row_strings['neg_acc_ind:stim_acc_ded']} \\\\""" + r"""
             \bottomrule
-            \multicolumn{4}{l}{\footnotesize {.} $p<0.1$,\:\:{*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
+            \multicolumn{4}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
             \end{tabular}
             """).strip()
             with open(os.path.join(dir, 'extended_model.tex'), 'w') as f:
@@ -183,11 +183,11 @@ class RegressionModel(object):
 
     @staticmethod
     def get_significance_level_string(p):
-        if p >= 0.05:
+        if 0.05 <= p:
             return '$n.s.$'
-        elif p >= 0.01 and p < 0.05:
+        elif 0.01 <= p < 0.05:
             return '*'
-        elif p >= 0.001 and p < 0.01:
+        elif 0.001 <= p < 0.01:
             return '**'
         elif p < 0.001:
             return '***'

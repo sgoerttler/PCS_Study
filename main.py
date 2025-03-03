@@ -16,7 +16,7 @@ def main():
     data_processing = DataProcessing()
     data_processing.read_data()
     data_processing.prepare_data(data_mode='testing')
-    data_processing.remove_outlier_participants()  # determining outliers requires the prepared data
+    data_processing.exclude_outlier_participants()  # determining outliers requires the prepared data
     data_processing.save_prepared_data_tabular(mode='all')
     data_processing.save_prepared_data_tabular(mode='paired')
     data_processing.compute_group_normed_data()  # requires saved tabular data with outliers removed
