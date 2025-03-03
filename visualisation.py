@@ -4,6 +4,8 @@ from scipy.stats import sem
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from mpl_toolkits.axisartist.axislines import SubplotZero
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*Glyph.*")
 
 from utils import add_legend, transparent_to_opaque
 
@@ -230,6 +232,7 @@ class PlotAllResults(object):
             y_RT_data[self.df_paired['col_ded'][mask_select] == idx_color_2] -= self.df_model_extended.params[
                                                                                     factor] / 1000
 
+        min_sample_size = 15
         x_acc_bins = np.arange(0.35, 1.0, 0.05)
         y_RT_bins = np.zeros(x_acc_bins.shape)
         y_RT_bins_num_data_points = np.zeros(x_acc_bins.shape)
@@ -238,14 +241,14 @@ class PlotAllResults(object):
             y_RT_bins[idx_bin] = np.mean(y_RT_data[(x_acc_data >= x_acc_low)
                                                    & (x_acc_data < x_acc_high)])
             y_RT_bins_num_data_points[idx_bin] = sum((x_acc_data >= x_acc_low) & (x_acc_data < x_acc_high))
-            y_RT_bins_sem[idx_bin] = sem(y_RT_data[(x_acc_data >= x_acc_low)
-                                                   & (x_acc_data < x_acc_high)])
+            if y_RT_bins_num_data_points[idx_bin] >= min_sample_size:
+                y_RT_bins_sem[idx_bin] = sem(y_RT_data[(x_acc_data >= x_acc_low)
+                                                       & (x_acc_data < x_acc_high)])
 
-        # remove bins with less than 15 data points
-        min_samplesize = 15
-        x_acc_bins_selected = x_acc_bins[y_RT_bins_num_data_points >= min_samplesize]
-        y_RT_bins_selected = y_RT_bins[y_RT_bins_num_data_points >= min_samplesize]
-        y_RT_bins_sem_selected = y_RT_bins_sem[y_RT_bins_num_data_points >= min_samplesize]
+        # remove bins with less than the minimum sample size data points
+        x_acc_bins_selected = x_acc_bins[y_RT_bins_num_data_points >= min_sample_size]
+        y_RT_bins_selected = y_RT_bins[y_RT_bins_num_data_points >= min_sample_size]
+        y_RT_bins_sem_selected = y_RT_bins_sem[y_RT_bins_num_data_points >= min_sample_size]
 
         return x_acc_bins_selected, y_RT_bins_selected, y_RT_bins_sem_selected
 

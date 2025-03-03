@@ -2,6 +2,8 @@ import os
 import numpy as np
 import textwrap
 import copy
+
+import pandas as pd
 import statsmodels.formula.api as smf
 
 
@@ -41,12 +43,18 @@ class RegressionModel(object):
 
     def fit(self, model='basic', show_summary=False):
         if model == 'basic':
-            self.model_basic = smf.ols(formula=self.get_formula_basic(), data=self.get_data()).fit()
+            formula = self.get_formula_basic()
+            data = self.get_data()
+            self.model_basic = smf.ols(formula, data).fit()
+            self.model_basic.f2 = self.compute_cohens_f2_formula(formula, data, self.model_basic.rsquared)
             if show_summary:
                 print('Basic model results:')
                 print(self.model_basic.summary(), '\n')
         elif model == 'extended':
-            self.model_extended = smf.ols(formula=self.get_formula_extended(), data=self.get_data()).fit()
+            formula = self.get_formula_extended()
+            data = self.get_data()
+            self.model_extended = smf.ols(formula, data).fit()
+            self.model_extended.f2 = self.compute_cohens_f2_formula(formula, data, self.model_extended.rsquared)
             if show_summary:
                 print('Extended model results:')
                 print(self.model_extended.summary(), '\n')
@@ -60,22 +68,22 @@ class RegressionModel(object):
             row_strings = self.get_row_strings(model_basic)
 
             latex_string = textwrap.dedent(r"""
-            \begin{tabular}{lSSS@{\hskip -0.2in}Sl}
+            \begin{tabular}{lSSS@{\hskip -0.2in}Sl@{\hskip -0.2in}S}
             \toprule
-            \textbf{Base model} & \textbf{Estimate [ms]} & \textbf{SE [ms]} & $\mathbf{t}$ & $\mathbf{p}$ & \\
+            \textbf{Base model} & \textbf{Estimate [ms]} & \textbf{SE [ms]} & $\mathbf{t}$ & \hspace{0.2in}$\mathbf{p}$ & & \hspace{0.2in}$\mathbf{f^2}$ \\
             \toprule 
             \toprule""" + f"""
             (Intercept) & {row_strings['Intercept']} \\\\
-            \cdashlinelr{{1-6}}
+            \cdashlinelr{{1-7}}
             Green & {row_strings['green']} \\\\
             Blue & {row_strings['blue']} \\\\
             Yellow & {row_strings['yellow']} \\\\
-            \cdashlinelr{{1-6}}
+            \cdashlinelr{{1-7}}
             75\% context & {row_strings['target_acc_75']} \\\\
             Post-error : 75\% context & {row_strings['neg_acc_ind:target_acc_75']} \\\\
             Post-correct : 35\% context & {row_strings['acc_ind:target_acc_35']} \\\\""" + r"""
             \bottomrule
-            \multicolumn{4}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
+            \multicolumn{5}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
             \end{tabular}
             """).strip()
             with open(os.path.join(dir, 'basic_model.tex'), 'w') as f:
@@ -86,17 +94,17 @@ class RegressionModel(object):
             row_strings = self.get_row_strings(model_extended)
 
             latex_string = textwrap.dedent(r"""
-            \begin{tabular}{lSSS@{\hskip -0.2in}Sl}
+            \begin{tabular}{lSSS@{\hskip -0.2in}Sl@{\hskip -0.2in}S}
             \toprule
-            \textbf{Extended model} & \textbf{Estimate [ms]} & \textbf{SE [ms]} & $\mathbf{t}$ & $\mathbf{p}$ & \\
+            \textbf{Extended model} & \textbf{Estimate [ms]} & \textbf{SE [ms]} & $\mathbf{t}$ & \hspace{0.2in}$\mathbf{p}$ & & \hspace{0.2in}$\mathbf{f^2}$ \\
             \toprule
             \toprule""" + f"""
             (Intercept) & {row_strings['Intercept']} \\\\
-            \cdashlinelr{{1-6}}
+            \cdashlinelr{{1-7}}
             Green & {row_strings['green']} \\\\
             Blue & {row_strings['blue']} \\\\
             Yellow & {row_strings['yellow']} \\\\
-            \cdashlinelr{{1-6}}
+            \cdashlinelr{{1-7}}
             75\% context & {row_strings['target_acc_75']} \\\\
             Post-error & {row_strings['neg_acc_ind']} \\\\
             Post-error : 75\% context & {row_strings['neg_acc_ind:target_acc_75']} \\\\
@@ -106,7 +114,7 @@ class RegressionModel(object):
             Difficulty [\%] \^{{}} 3 & {row_strings['stim_acc_ded_cu_scaled']} \\\\
             Post-error : Difficulty [\%] & {row_strings['neg_acc_ind:stim_acc_ded']} \\\\""" + r"""
             \bottomrule
-            \multicolumn{4}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
+            \multicolumn{5}{l}{\footnotesize {*} $p<0.05$,\:\:{**} $p<0.01$,\:\:{***} $p<0.001$}
             \end{tabular}
             """).strip()
             with open(os.path.join(dir, 'extended_model.tex'), 'w') as f:
@@ -119,6 +127,7 @@ class RegressionModel(object):
         tdec = self.get_dec_scale(model_ms.tvalues)
         pdec = self.get_dec_scale(model_ms.pvalues.clip(lower=1e-13, upper=1))
         sig = model_ms.pvalues.apply(self.get_significance_level_string)
+        f2dec = self.get_dec_scale(model_ms.f2)
 
         row_strings = {}
         for key in model_ms.params.keys():
@@ -128,7 +137,8 @@ class RegressionModel(object):
             & {self.get_formatted_string(model_ms.tvalues[key], tdec[key])} 
             & {self.get_formatted_string(model_ms.pvalues[key], pdec[key])} 
             & {sig[key]}
-            """).strip().replace("\n", "")
+            & {self.get_formatted_string(model_ms.f2[key], f2dec[key]) if key != 'Intercept' else r'backslashhspace{0.2in}{--}'} 
+            """).strip().replace("\n", "").replace('backslash',  '\\')
         return row_strings
 
     @staticmethod
@@ -164,8 +174,8 @@ class RegressionModel(object):
         return model_ms
 
     @staticmethod
-    def get_dec_scale(bse):
-        log_scale = np.log10(np.abs(bse))
+    def get_dec_scale(value):
+        log_scale = np.log10(np.abs(value))
         dec_place = (np.floor(log_scale).astype(int) - 1)
         return dec_place
 
@@ -191,3 +201,23 @@ class RegressionModel(object):
             return '**'
         elif p < 0.001:
             return '***'
+
+    @staticmethod
+    def compute_cohens_f2_formula(formula, data, R2_full):
+        """Compute Cohen's f2 for each predictor in a formula-based regression model."""
+
+        # Extract target and predictors from the formula
+        target = formula.split("~")[0].strip()
+        predictors = formula.split("~")[1].strip().split("+")
+        predictors = [p.strip() for p in predictors]  # Clean spaces
+
+        # Compute f2 for each predictor
+        f2_results = {}
+        for predictor in predictors:
+            reduced_formula = f"{target} ~ " + " + ".join([p for p in predictors if p != predictor])
+            reduced_model = smf.ols(reduced_formula, data).fit()
+
+            R2_reduced = reduced_model.rsquared
+            f2_results[predictor] = (R2_full - R2_reduced) / (1 - R2_full)
+
+        return pd.Series(f2_results)
