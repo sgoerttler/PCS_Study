@@ -4,6 +4,7 @@ This repository contains the code for the paper **"Post-error slowing: reconside
 
 ## **Overview**  
 The repository includes:  
+- **Effect Size Simulation:** Code for simulating the relevant effect sizes in our experiment. 
 - **Data Processing:** Code for collecting and preparing tabular data as unpaired and paired trials.  
 - **Psychometric Curve Fitting:** Code for mapping stimulus brightness to accuracy using generalized linear mixed model-based psychometric curves.  
 - **Regression Models:** Code for fitting regression models to analyze the data.  
@@ -27,11 +28,20 @@ install.packages("lme4")
 
 ## **Usage**
 
+### **Running the Simulation**
+
+The simulation retrieves the minimum detectable effect size with respect to the number of participants. It can be used to determine the number of participants required for the experiment.
+To run the effect size simulation, execute:
+```bash
+python main_effect_size_simulation.py
+```
+This will simulate the effect sizes for the experiment, fit the results and plot the results together with the model fits.
+
 ### **Running the Analysis**
 
 To execute the full pipeline, run:
 ```bash
-python main.py
+python main_analysis.py
 ```
 This will:
 1. Read and preprocess the data.
