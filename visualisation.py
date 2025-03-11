@@ -54,6 +54,7 @@ class PlotAllResults(object):
     errorbar_handle : np.ndarray
         Array of errorbar handles
     """
+
     def __init__(self, df_model_basic=None, df_model_extended=None, df_paired=None, dir_figures='figures', savefigs=True):
         for df in [df_model_basic, df_model_extended]:
             df.params *= 1000
@@ -67,8 +68,8 @@ class PlotAllResults(object):
 
         os.makedirs(self.dir_figures, exist_ok=True)
 
-        self.fig, self.ax = plt.subplots(figsize=(8.4, 8.4), nrows=2, ncols=2, width_ratios=[1, 1],
-                                    height_ratios=[1, 1])
+        self.fig, self.ax = plt.subplots(
+            figsize=(8.4, 8.4), nrows=2, ncols=2, height_ratios=[1, 1], width_ratios=[1, 1])
         self.colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         self.acc_conds = [0.35, 0.75]
         self.x_offset_plot = 0.15
@@ -391,6 +392,7 @@ class PlotTheory(object):
     ylims : list
         List of y limits
     """
+
     def __init__(self, dir_figures='figures'):
         self.dir_figures = dir_figures
 

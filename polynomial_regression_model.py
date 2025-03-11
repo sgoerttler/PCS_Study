@@ -25,8 +25,9 @@ class RegressionModel(object):
     model_extended : statsmodels.regression.linear_model.RegressionResultsWrapper
         Fitted extended regression model
     """
+
     def __init__(self, df):
-        os.makedirs('results', exist_ok=True)
+        os.makedirs('results_2', exist_ok=True)
         self.df = df.copy()
         self.df['target_acc_35'] = (self.df['target_acc'] == 0.35).astype(int)
         self.df['target_acc_75'] = (self.df['target_acc'] == 0.75).astype(int)
